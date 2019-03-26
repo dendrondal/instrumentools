@@ -5,10 +5,10 @@ This is a collection of scripts that help with various I/O and graphing tasks th
 **thermal_analysis.py** This allows for plotting of DSC and TGA produced by TA Universal Analysis and MUSE software, respectively. Both allow multiple csv/xls files to be combined into a single plot with a uniform format. This is also sized to where it will fit perfectly into a single column, allowing easy insertion into RSC/ACS templates. 
 
 To use this:
-1. Create a directory for all files you want graphed together on your computer.
-2. Go to File > Export and export either a .csv for Universal Analysis or File > Output to Excel for MUSE.
-3. Once all spectra are exported in proper format, transfer them via flash drive/hard drive to the newly created folder.
-4. Point this script there and run it according to the documentation.
+	1. Create a directory for all files you want graphed together on your computer.
+	2. Go to File > Export and export either a .csv for Universal Analysis or File > Output to Excel for MUSE.
+	3. Once all spectra are exported in proper format, transfer them via flash drive/hard drive to the newly created folder.
+	4. Point this script there and run it according to the documentation.
 
 **UV-vis_cac.py** Takes results from Bruker UV-vis critical aggregation concentration (CAC) experiment and outputs them to both a stacked spectra and the CAC graph. Just run this in a terminal and follow the prompts. Contains options for single wavelength (Nile red) and multi-wavelength (Pyrene, DPH) experiments. In the Bruker software, after running all of your experiments, go to File > Export Data, which will allow you to output an Excel sheet with a column for each experiment.
 
