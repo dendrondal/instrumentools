@@ -1,6 +1,7 @@
 from skimage import data, io, filters
 from skimage.feature import blob_doh, peak_local_max
 from skimage.morphology import watershed
+from skimage.restoration import denoise_bilateral
 import numpy as np
 import matplotlib.pyplot as plt
 # Label image regions.
@@ -27,36 +28,48 @@ def rolling_ball(img):
 
 def watershed_segmentation(img):
     distance = ndi.distance_transform_edt(img)
-    print(f'distance: {distance.shape}')
     local_max = peak_local_max(distance, indices=False)
-    print(f'Local maxima: {local_max.shape}')
-    markers = n di.label(local_max)
-    print(f'markers: {markers.shape}')
-    return watershed(-distance, markers=markers)
+    plt.plot(local_max)
+    plt.savefig('')
+    markers = ndi.label(local_max)[0]
+    return watershed(-distance, markers, compactness=0.01)
+
+
+def denoising(img):
+    return denoise_bilateral(img, multichannel=False)
 
 def edge_detection(img):
     edges = filters.sobel(img)
-    io.imshow(edges)
     return edges
 
 
 def blob_detection(img):
     """Finds maximas in the determinant of the Hessian of the image, which should correspond to particles"""
     print('Performing blob detection...')
-    return blob_doh(img, max_sigma=250, threshold=0.018)
+    return blob_doh(img, max_sigma=300, threshold=0.017)
 
 
-def blob_overlay(img, blobs, outpath):
-    """Saves masking of blob boundaries on top of original image in results subdirectory"""
-    fig, ax = plt.subplots()
-    ax.imshow(img)
-    for blob in blobs:
-        y, x, r = blob
-        c = plt.Circle((x,y), r, color='r', linewidth=2, fill=False)
-        ax.add_patch(c)
-    ax.set_axis_off()
-    plt.tight_layout()
-    plt.savefig(outpath)
+class Overlay:
+    def __init__(self, img, outpath):
+        self.img = img
+        self.outpath = outpath
+        self.fig, self.ax = plt.subplots()
+        self.ax.set_axis_off()
+        plt.tight_layout()
+
+    def blob(self, blobs):
+        """Saves masking of blob boundaries on top of original image in results subdirectory"""
+        self.ax.imshow(self.img)
+        for blob in blobs:
+            y, x, r = blob
+            c = plt.Circle((x,y), r, color='r', linewidth=2, fill=False)
+            self.ax.add_patch(c)
+        plt.savefig(f'{self.outpath}_blobs')
+
+    def sobel_edge(self, edgemap):
+        self.ax.imshow(edgemap)
+        plt.savefig(f'{self.outpath}_edges')
+
 
 
 def scale_bar(img):
@@ -64,7 +77,10 @@ def scale_bar(img):
 
 
 def particle_diameters(blobs):
-    pass
+    diameters = []
+    for blob in blobs:
+        diameters.append(blob[-1] * 2)
+    return diameters
 
 def pdi_histogram(combined_diameters):
     pass
@@ -75,15 +91,17 @@ def pdi_histogram(combined_diameters):
 def main(dir):
     Path(f'{dir}/Results').mkdir(parents=True, exist_ok=True)
     print("Processing folder...")
+    diameters = []
     for idx, img_path in enumerate(Path(dir).glob('*.tif')):
         img = io.imread(img_path, as_gray=True)
         #crop out scale bar
         img = img[:2230, :]
-        segmented = watershed_segmentation(img)
+        cleaned = denoising(img)
+        segmented = watershed_segmentation(cleaned)
         blobs = blob_detection(segmented)
+        diameters.append(particle_diameters(blobs))
         outpath = Path(dir) / 'Results' / str(idx+1)
-        print(str(outpath), type(outpath))
-        overlay(img, blobs, outpath)
+        Overlay(img, outpath).blob(blobs)
 
 
 if __name__ == '__main__':
