@@ -14,10 +14,8 @@ from pathlib import Path
 from tqdm import tqdm
 
 
-def threshold(img_path):
-    """Uses Otsu thresholding to reduce background noise. Returns binarized image"""
-    img = io.imread(img_path, as_gray=True, plugin='tifffile')
-    print(img.shape)
+def threshold(img):
+    """Uses Otsu t0hresholding to reduce background noise. Returns binarized image"""
     thresh = filters.threshold_otsu(img)
     return img > thresh
 
@@ -30,13 +28,14 @@ def watershed_segmentation(img):
     distance = ndi.distance_transform_edt(img)
     local_max = peak_local_max(distance, indices=False)
     plt.plot(local_max)
-    plt.savefig('')
+    plt.show()
     markers = ndi.label(local_max)[0]
     return watershed(-distance, markers, compactness=0.01)
 
 
 def denoising(img):
     return denoise_bilateral(img, multichannel=False)
+
 
 def edge_detection(img):
     edges = filters.sobel(img)
@@ -46,7 +45,7 @@ def edge_detection(img):
 def blob_detection(img):
     """Finds maximas in the determinant of the Hessian of the image, which should correspond to particles"""
     print('Performing blob detection...')
-    return blob_doh(img, max_sigma=300, threshold=0.017)
+    return blob_doh(img, max_sigma=500, threshold=0.015)
 
 
 class Overlay:
@@ -71,7 +70,6 @@ class Overlay:
         plt.savefig(f'{self.outpath}_edges')
 
 
-
 def scale_bar(img):
     pass
 
@@ -81,6 +79,11 @@ def particle_diameters(blobs):
     for blob in blobs:
         diameters.append(blob[-1] * 2)
     return diameters
+
+def fitness_function(diameters, size_estimate):
+    mse = 1/len(diameters)*sum([(size_estimate - y)**2 for y in diameters])
+    fitness = len(diameters) / mse
+    return fitness
 
 def pdi_histogram(combined_diameters):
     pass
@@ -92,16 +95,16 @@ def main(dir):
     Path(f'{dir}/Results').mkdir(parents=True, exist_ok=True)
     print("Processing folder...")
     diameters = []
-    for idx, img_path in enumerate(Path(dir).glob('*.tif')):
+    for idx, img_path in enumerate(Path(dir).glob('**/*.tif')):
         img = io.imread(img_path, as_gray=True)
         #crop out scale bar
         img = img[:2230, :]
         cleaned = denoising(img)
-        segmented = watershed_segmentation(cleaned)
-        blobs = blob_detection(segmented)
+        blobs = blob_detection(cleaned)
         diameters.append(particle_diameters(blobs))
         outpath = Path(dir) / 'Results' / str(idx+1)
         Overlay(img, outpath).blob(blobs)
+        print(diameters[idx])
 
 
 if __name__ == '__main__':
