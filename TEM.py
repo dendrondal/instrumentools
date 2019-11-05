@@ -1,10 +1,9 @@
 from skimage import data, io, filters
-from skimage.feature import blob_doh, peak_local_max
+from skimage.feature import blob_doh, blob_dog, peak_local_max, canny
 from skimage.morphology import watershed
 from skimage.restoration import denoise_bilateral
 import numpy as np
 import matplotlib.pyplot as plt
-# Label image regions.
 from skimage.measure import regionprops
 import matplotlib.patches as mpatches
 from skimage.morphology import label
@@ -12,6 +11,9 @@ from scipy import ndimage as ndi
 import click
 from pathlib import Path
 from tqdm import tqdm
+import seaborn as sb
+import csv
+from ncempy.io import dm
 
 
 def threshold(img):
@@ -44,8 +46,7 @@ def edge_detection(img):
 
 def blob_detection(img):
     """Finds maximas in the determinant of the Hessian of the image, which should correspond to particles"""
-    print('Performing blob detection...')
-    return blob_doh(img, max_sigma=500, threshold=0.015)
+    return blob_doh(img, threshold=0.016, max_sigma=133)
 
 
 class Overlay:
@@ -74,37 +75,80 @@ def scale_bar(img):
     pass
 
 
-def particle_diameters(blobs):
+def particle_diameters(blobs, ratio):
     diameters = []
     for blob in blobs:
-        diameters.append(blob[-1] * 2)
+        diameters.append(blob[-1] * 2 * ratio)
     return diameters
+
+
+def population_sample():
+    pass
+
 
 def fitness_function(diameters, size_estimate):
     mse = 1/len(diameters)*sum([(size_estimate - y)**2 for y in diameters])
     fitness = len(diameters) / mse
     return fitness
 
-def pdi_histogram(combined_diameters):
-    pass
+
+def _flatten(nested):
+    flat = []
+    for lst in nested:
+        for item in lst:
+            flat.append(item)
+    return flat
+
+
+def plot_kde(result):
+    data = np.loadtxt(result)
+    plot = sb.distplot(data, axlabel='Diameter (nm)', hist=False)
+    plot.figure.savefig(Path(result).with_suffix('.png'), dpi=1200)
+
+
+def summary_stats(result):
+    print(f'''Average: {sum(result)/len(result)} \nMinimum: {min(result)} 
+        \nMaximum: {max(result)} ''')
+
 
 
 @click.command()
 @click.argument('dir', type=click.Path(exists=True))
 def main(dir):
-    Path(f'{dir}/Results').mkdir(parents=True, exist_ok=True)
+
+    output = Path(f'{dir}/Results')
+    output.mkdir(parents=True, exist_ok=True)
+
     print("Processing folder...")
-    diameters = []
-    for idx, img_path in enumerate(Path(dir).glob('**/*.tif')):
+    result_name = click.prompt('Enter result filename', type=str,
+                               default=output.parents[0].name)
+    csv_name = Path(output / result_name).with_suffix('.csv')
+
+    imgs = [i for i in Path(dir).glob('**/*.tif')]
+    for idx, img_path in tqdm(enumerate(imgs), total=len(imgs)):
         img = io.imread(img_path, as_gray=True)
+
+        try:
+            metadata = dm.dmReader(f'{str(img_path)[:-4]}.dm4')
+            ratio = metadata['pixelSize'][0]
+        except FileNotFoundError:
+            ratio = click.prompt(
+                f'dm4 not found. Enter the nm/pixel ratio in {img_path.stem}:',
+                type=float, default=0.204)
+
         #crop out scale bar
         img = img[:2230, :]
         cleaned = denoising(img)
         blobs = blob_detection(cleaned)
-        diameters.append(particle_diameters(blobs))
+
+        with open(csv_name, 'a') as f:
+            np.savetxt(f, particle_diameters(blobs, ratio))
+
         outpath = Path(dir) / 'Results' / str(idx+1)
         Overlay(img, outpath).blob(blobs)
-        print(diameters[idx])
+
+    plot_kde(csv_name)
+    print('Finished!')
 
 
 if __name__ == '__main__':
