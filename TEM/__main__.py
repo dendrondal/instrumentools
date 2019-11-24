@@ -46,7 +46,10 @@ def edge_detection(img):
 
 def get_pixel_ratio(img, img_path):
     try:
-        metadata = dm.dmReader(f'{str(img_path)[:-4]}.dm4')
+        try:
+            metadata = dm.dmReader(f'{str(img_path)[:-4]}.dm4')
+        except FileNotFoundError:
+            metadata = dm.dmReader(f'{str(img_path)[:-4]}.dm3')
         ratio = metadata['pixelSize'][0]
     except FileNotFoundError:
         io.imshow(img)
