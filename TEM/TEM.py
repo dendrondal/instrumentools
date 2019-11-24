@@ -15,10 +15,10 @@ import seaborn as sb
 import csv
 from ncempy.io import dm
 
-io.use_plugin('matplotlib')
 
 def threshold(img):
-    """Uses Otsu t0hresholding to reduce background noise. Returns binarized image"""
+    """Uses Otsu thresholding to reduce background noise.
+    Returns binarized image"""
     thresh = filters.threshold_otsu(img)
     return img > thresh
 
@@ -44,36 +44,39 @@ def edge_detection(img):
     edges = filters.sobel(img)
     return edges
 
+def get_pixel_ratio(img, img_path):
+    try:
+        metadata = dm.dmReader(f'{str(img_path)[:-4]}.dm4')
+        ratio = metadata['pixelSize'][0]
+    except FileNotFoundError:
+        io.imshow(img)
+        plt.show()
+        ratio = click.prompt(
+            f'dm4 not found. Enter the nm/pixel ratio in {img_path.stem}:',
+            type=float, default=0.204)
+        plt.close()
+
+    return ratio
+
 
 def blob_detection(img):
-    """Finds maximas in the determinant of the Hessian of the image, which should correspond to particles"""
-    return blob_doh(img, min_sigma=11, max_sigma=100)
+    """Finds maximas in the determinant of the Hessian of the image,
+    which corresponds to particles"""
+    return blob_doh(img, min_sigma=25, max_sigma=500, num_sigma=25)
 
 
-class Overlay:
-    def __init__(self, img, outpath):
-        self.img = img
-        self.outpath = outpath
-        self.fig, self.ax = plt.subplots()
-        self.ax.set_axis_off()
-        plt.tight_layout()
-
-    def blob(self, blobs):
-        """Saves masking of blob boundaries on top of original image in results subdirectory"""
-        self.ax.imshow(self.img)
-        for blob in blobs:
-            y, x, r = blob
-            c = plt.Circle((x,y), r, color='r', linewidth=2, fill=False)
-            self.ax.add_patch(c)
-        plt.savefig(f'{self.outpath}_blobs')
-
-    def sobel_edge(self, edgemap):
-        self.ax.imshow(edgemap)
-        plt.savefig(f'{self.outpath}_edges')
-
-
-def scale_bar(img):
-    pass
+def plot_blobs(img, blobs, outpath):
+    """Saves masking of blob boundaries on top of original image
+     in results subdirectory"""
+    fig, ax = plt.subplots()
+    ax.set_axis_off()
+    plt.tight_layout()
+    ax.imshow(img)
+    for blob in blobs:
+        y, x, r = blob
+        c = plt.Circle((x,y), r, color='r', linewidth=2, fill=False)
+        ax.add_patch(c)
+    plt.savefig(f'{outpath}_blobs')
 
 
 def particle_diameters(blobs, ratio):
@@ -83,14 +86,7 @@ def particle_diameters(blobs, ratio):
     return diameters
 
 
-def population_sample():
-    pass
 
-
-def fitness_function(diameters, size_estimate):
-    mse = 1/len(diameters)*sum([(size_estimate - y)**2 for y in diameters])
-    fitness = len(diameters) / mse
-    return fitness
 
 
 def _flatten(nested):
@@ -102,6 +98,8 @@ def _flatten(nested):
 
 
 def plot_kde(result):
+    """Plots histogram of particles sizes,
+    along with kernel density estimate of distribution"""
     data = np.loadtxt(result)
     plot = sb.distplot(data, axlabel='Diameter (nm)', hist=False)
     plot.figure.savefig(Path(result).with_suffix('.png'), dpi=1200)
@@ -113,11 +111,10 @@ def summary_stats(result):
         \nMaximum: {max(result)} ''')
 
 
-
 @click.command()
 @click.argument('dir', type=click.Path(exists=True))
 def main(dir):
-
+    io.use_plugin('matplotlib')
     output = Path(f'{dir}/Results')
     output.mkdir(parents=True, exist_ok=True)
 
@@ -128,18 +125,7 @@ def main(dir):
 
     for idx, img_path in enumerate(Path(dir).glob('**/*.tif')):
         img = io.imread(img_path, as_gray=True)
-
-        try:
-            metadata = dm.dmReader(f'{str(img_path)[:-4]}.dm4')
-            ratio = metadata['pixelSize'][0]
-        except FileNotFoundError:
-            io.imshow(img)
-            plt.show()
-            ratio = click.prompt(
-                f'dm4 not found. Enter the nm/pixel ratio in {img_path.stem}:',
-                type=float, default=0.204)
-            plt.close()
-
+        ratio = get_pixel_ratio(img, img_path)
         #crop out scale bar
         print('Processing...')
         img = img[:2230, :]
@@ -147,7 +133,7 @@ def main(dir):
         blobs = blob_detection(cleaned)
 
         outpath = Path(dir) / 'Results' / str(idx + 1)
-        Overlay(img, outpath).blob(blobs)
+        plot_blobs(img, blobs, outpath)
         plt.show()
         if click.confirm('Is this an acceptable result?'):
             plt.close()
