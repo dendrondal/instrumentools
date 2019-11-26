@@ -65,7 +65,7 @@ def get_pixel_ratio(img, img_path):
 def blob_detection(img):
     """Finds maximas in the determinant of the Hessian of the image,
     which corresponds to particles"""
-    return blob_doh(img, min_sigma=25, max_sigma=500, num_sigma=25)
+    return blob_doh(img, min_sigma=26, max_sigma=120, num_sigma=25)
 
 
 def plot_blobs(img, blobs, outpath):
@@ -87,9 +87,6 @@ def particle_diameters(blobs, ratio):
     for blob in blobs:
         diameters.append(blob[-1] * 2 * ratio)
     return diameters
-
-
-
 
 
 def _flatten(nested):
