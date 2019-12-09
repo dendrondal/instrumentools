@@ -3,7 +3,7 @@ This is a collection of scripts that help with various I/O and graphing tasks th
 
 ## Installation	
 First things first, you need to make sure you have modern python on your machine. If you're a Mac or Linux user, this is as easy as opening a terminal and typing ```python --version```. With Windows machines, there are extra steps. You can either use the [bash terminal in Windows](https://www.howtogeek.com/249966/how-to-install-and-use-the-linux-bash-shell-on-windows-10/) or the [Anaconda terminal](https://docs.anaconda.com/anaconda/navigator/getting-started/#navigator-starting-navigator). Since all of the software is usable via the command line, it's most easily available using pipx:
-```python
+```
 python3 -m pip install --user pipx
 python3 -m pipx ensurepath
 pipx install instrumentools
@@ -11,6 +11,7 @@ pipx install instrumentools
 From there, pick the tool you want to run, and use ```pipx run TOOL```
 
 [Thermal Analysis (TGA/DSC)](https://github.com/dendrondal/grad_school_tools/tree/master/thermal_analysis)
+
 [CAC Analysis by Fluorometry/UV-Vis](https://github.com/dendrondal/grad_school_tools/tree/master/cac)
 
 ## TEM
