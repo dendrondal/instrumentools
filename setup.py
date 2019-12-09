@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="instrumentools", # Replace with your own username
+    name="instrumentools-dendrondal",
     version="0.0.1",
     author="dendrondal",
     author_email="dendrondal@protonmai.com",
