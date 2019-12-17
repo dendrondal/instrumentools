@@ -10,9 +10,9 @@ pipx install instrumentools
 ```
 From there, pick the tool you want to run, and use ```pipx run TOOL```
 
-[Thermal Analysis (TGA/DSC)](https://github.com/dendrondal/grad_school_tools/tree/master/thermal_analysis)
+[Thermal Analysis (TGA/DSC)](https://github.com/dendrondal/grad_school_tools/tree/master/Thermal_Analysis)
 
-[CAC Analysis by Fluorometry/UV-Vis](https://github.com/dendrondal/grad_school_tools/tree/master/cac)
+[CAC Analysis by Fluorometry/UV-Vis](https://github.com/dendrondal/grad_school_tools/tree/master/CAC)
 
 ## TEM
 Utility that renames all TEM files (.tiff) in folder based on metadata present within the image. Useful for sorting images by material. Has only been tested for images output by a JEOL 1230 instrument, may require tweaking for others.

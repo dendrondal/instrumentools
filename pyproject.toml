@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "instrumentools"
+version = "0.2.0"
+description = "Data processing and plotting scripts for chemistry workflows"
+license = "MIT"
+authors = ["Dal Williams <dendrondal@protonmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.6"
+tqdm = "^4.40.2"
+click = "^7.0"
+numpy = "^1.17.4"
+scikit-image = "^0.16.2"
+matplotlib = "^3.1.2"
+seaborn = "^0.9.0"
+pandas = "^0.25.3"
+ncempy = "^1.5.0"

@@ -11,6 +11,7 @@ import pandas as pd
 from matplotlib import ticker
 import re
 import glob
+import click
 from cycler import cycler
 
 
@@ -228,3 +229,10 @@ def cycle_reproducibility(path, odd_heat_cycles=False):
                                                    y='heat flow (mW)', ax=ax)
         
         plt.savefig(os.path.join(path, f'{title}.png'))
+
+
+@click.command()
+@click.option('--method', prompt="TGA or DSC?")
+def main()
+    """Switching function for DSC/TGA processing"""
+    pass
