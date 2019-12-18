@@ -13,7 +13,9 @@ def tga_cli(path, title):
 
 @click.command()
 @click.option('--path', prompt='Folder containing DSC data',
-            type=click.Path(exists=True), default=os.getcwd())
+            type=click.Path(exists=True), 
+            default='/home/dal/Documents/jsdw_191217_pisa-dsc'
+)
 @click.option('--title', prompt='Plot title')
 @click.option('--cycle', prompt='Cycle number to plot')
 def dsc_cli(path, title, cycle):
@@ -26,7 +28,7 @@ def dsc_cli(path, title, cycle):
 def main(plot_type):
     features = {'TGA': tga_cli, 'DSC': dsc_cli}
     try:
-            features[plot_type.upper()].__call__
+            features[plot_type.upper()]()
     except KeyError as e:
         raise Exception(f'Data type not yet supported.\
              Valid data types are {[key for key in features.keys()]}')

@@ -80,7 +80,7 @@ def csv_extraction(path, save=False):
     with same name as TA .txt output."""
     with open(path, encoding='utf-16') as f:
         for i, line in enumerate(f):
-            if 'StartOfData' in line:
+            if 'OrgFile' in line:
                 #Some files are output with different starting lines.
                 start = i+1
                 break
@@ -145,7 +145,7 @@ def dsc_plotting(cwd, title, cycle=2, filenames=None, legend=False):
         raise TypeError('filenames must be list of strings or None.')
         
     for i, name in enumerate(filenames):
-        df = pd.read_csv(f'{name}.csv')
+        df = csv_extraction(name)
         #Plot formatting goes here
         plt.xlabel('Temperature ($^o$C)', family='arial', weight='bold', size=8)
         plt.ylabel('Heat Flow (mW)', family='arial', weight='bold', size=8)
@@ -164,16 +164,16 @@ def dsc_plotting(cwd, title, cycle=2, filenames=None, legend=False):
         df = normalize(df)
         #This operation introduces offset between the graphs
         if i != len(filenames):
-            df['normalized'] = df['normalized'].apply(lambda x: x-i*0.2)
+            df.loc['normalized'] = df['normalized'].apply(lambda x: x-i*1/len(filenames))
         else: 
-            df['normalized'] = df['normalized'].apply(lambda x: x-1)
+            df.loc['normalized'] = df['normalized'].apply(lambda x: x-1)
             
         ax.plot(df.loc[df['cycle'] == cycle, 'temperature (C)'][:-1],
                  df.loc[df['cycle'] == cycle, 'normalized'][:-1],
-                 label=name.split('_')[-1][:-8].upper(),
+                 label=str(name.stem).split('_')[-1].upper(),
                  linewidth=1.25)
 
-        plt.savefig(Path(cwd)/f'{title}.png'), dpi=300)
+        plt.savefig(Path(cwd)/f'{title}.png', dpi=300)
         
 
 def normalize(df):
@@ -182,7 +182,7 @@ def normalize(df):
     #Unecessary for first implementation, since all cycle lengths identical.
     max_mW = df['heat flow (mW)'].max()
     min_mW = df['heat flow (mW)'].min()
-    df['normalized'] = df.loc[:, 'heat flow (mW)'].apply(lambda x: 
+    df.loc['normalized'] = df.loc[:, 'heat flow (mW)'].apply(lambda x: 
         (x-max_mW) / (max_mW - min_mW))
     return df
 
