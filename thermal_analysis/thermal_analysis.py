@@ -24,32 +24,23 @@ def sheet_split(cwd, filename):
         sheet = df.parse(name)
         sheet.to_excel(os.path.join(cwd, f'{name}.xls'))
         
-        
-def pattern_matcher(cwd, pattern_str):
-    """Returns list of filenames which matches given regex pattern. 
-        Takes desired search directory as first argument"""
-    pattern = re.compile(pattern_str, re.IGNORECASE)
-    matches = []
-    for name in os.listdir(cwd):
-        if re.search(pattern, name):
-            matches.append(name)
-    return matches
-
 
 def tga_plot(cwd, title, filenames=None):
-    """Plotting utility for TGA. In order to used, TGA must be exported as .xls
-        via the analysis software on the TGA computer.
-        ------------
-        Parameters
-        ------------
-        filenames: all of the filenames you want to stack on top of each other,
-        in quotes, in square brackets. For examle, if you want to compare 90-30    
-        G3-PAMAM-PLLA, enter ['90-L-G3', '70-L-G3', '50-L-G3', '30-L-G3'].
-        If filenames is None, automatically plots everything in directory
-        
-        cwd: file location where excel files are located (for example, if 
-        they're in your flash drive folder, enter 'F:/yourname/' in quotes)"""
+    """
+    Plotting utility for TGA. In order to used, TGA must be exported as .xls
+    via the analysis software on the TGA computer.
+    ------------
+    Parameters
+    ------------
+    filenames: all of the filenames you want to stack on top of each other,
+    in quotes, in square brackets. For examle, if you want to compare 90-30    
+    G3-PAMAM-PLLA, enter ['90-L-G3', '70-L-G3', '50-L-G3', '30-L-G3'].
+    If filenames is None, automatically plots everything in directory
     
+    cwd: file location where excel files are located (for example, if 
+    they're in your flash drive folder, enter 'F:/yourname/' in quotes)
+    """
+
     decomposition = []
     
     fig, ax = plt.subplots(figsize=(3.0, 2.5))
