@@ -16,15 +16,6 @@ from cycler import cycler
 from pathlib import Path
 
 
-def sheet_split(cwd, filename):
-    """If multiple spectra are in a single excel sheet, this function can be
-    used to split them into one sheet per spectra, saved to .xls files"""
-    df = pd.read_excel(os.path.join(cwd, filename))
-    for name in df.sheet_names:
-        sheet = df.parse(name)
-        sheet.to_excel(os.path.join(cwd, f'{name}.xls'))
-        
-
 def tga_plot(cwd, title, filenames=None):
     """
     Plotting utility for TGA. In order to used, TGA must be exported as .xls
@@ -46,8 +37,7 @@ def tga_plot(cwd, title, filenames=None):
     fig, ax = plt.subplots(figsize=(3.0, 2.5))
     
     if filenames is None:
-        os.chdir(cwd)
-        filenames = [file for file in glob.glob("*.txt")]
+        filenames = [file for file in Path(cwd).glob("*.txt")]
         
     for name in filenames:
         df = pd.read_excel(f'{cwd}/{name}', 
@@ -148,8 +138,7 @@ def dsc_plotting(cwd, title, cycle=2, filenames=None, legend=False):
     ax.set_prop_cycle(cycler('color', ['y', 'g', 'b', 'r']))
     
     if filenames is None:
-        os.chdir(cwd)
-        filenames = [file for file in glob.glob("*.txt")]
+        filenames = [file for file in Path(cwd).glob("*.txt")]
     elif type(filenames) is str:
         filenames = list(filenames)
     else:
@@ -184,7 +173,7 @@ def dsc_plotting(cwd, title, cycle=2, filenames=None, legend=False):
                  label=name.split('_')[-1][:-8].upper(),
                  linewidth=1.25)
 
-        plt.savefig(os.path.join(cwd, f'{title}.png'), dpi=1440)
+        plt.savefig(Path(cwd)/f'{title}.png'), dpi=300)
         
 
 def normalize(df):
