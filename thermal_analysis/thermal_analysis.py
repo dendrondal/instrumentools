@@ -13,6 +13,7 @@ import re
 import glob
 import click
 from cycler import cycler
+from pathlib import Path
 
 
 def sheet_split(cwd, filename):
@@ -136,10 +137,10 @@ def dsc_plotting(cwd, title, cycle=2, filenames=None, legend=False):
     ------------
     Parameters
     ------------
-    cwd: file location where excel files are located (for example, if 
-    they're in your flash drive folder, enter 'F:/yourname/' in quotes)
+    cwd: file location where csv files are located (for example, if 
+    they're in your flash drive folder, enter 'F:/yourname/datafolder' in quotes)
     
-    title: plot title
+    title: title of saved .png file
     
     filenames: all of the filenames you want to stack on top of each other,
     in quotes, in square brackets. For examle, if you want to compare 90-30    
@@ -229,10 +230,3 @@ def cycle_reproducibility(path, odd_heat_cycles=False):
                                                    y='heat flow (mW)', ax=ax)
         
         plt.savefig(os.path.join(path, f'{title}.png'))
-
-
-@click.command()
-@click.option('--method', prompt="TGA or DSC?")
-def main()
-    """Switching function for DSC/TGA processing"""
-    pass
