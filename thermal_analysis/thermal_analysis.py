@@ -92,18 +92,19 @@ def csv_extraction(path, save=False):
 
     df.columns = ['time (min)', 'temperature (C)', 'heat flow (mW)', 
                   'heat capacity (mJ/C)', 'N2 flow'] 
-    num = 0
     
+    num = 0
+
     def cycle(x):
         nonlocal num
         if x['time (min)'] == -2:
             #for some reason, this denotes a switch between heating/cooling
-            num += 1
+            num = x['temperature (C)']
         return num
     
     df['cycle'] = df.apply(cycle, axis=1)
     if save:
-        df.to_csv('{}.csv'.format(path.split('/')[-1]))
+        df.to_csv(path.with_suffix('.csv'))
         
     return df
 
@@ -161,6 +162,7 @@ def dsc_plotting(cwd, title, cycle=2, filenames=None, legend=False):
         raise TypeError('filenames must be list of strings or None.')
     
     for i, name in enumerate(filenames):
+        print(f'Processing {name.stem}...')
         df = csv_extraction(name)
         df = normalize(df)
         #This operation introduces offset between the graphs
@@ -182,7 +184,7 @@ def dsc_plotting(cwd, title, cycle=2, filenames=None, legend=False):
         
 
 def normalize(df):
-    df = df.loc[df['time (min)'] > 80.3]
+    df = df.loc[df['cycle'] > 1]
     #TODO: change this from set value to first cycle duration.
     #Unecessary for first implementation, since all cycle lengths identical.
     max_mW = df['heat flow (mW)'].max()
