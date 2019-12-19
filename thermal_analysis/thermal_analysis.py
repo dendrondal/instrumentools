@@ -111,7 +111,24 @@ def save_multiple_csvs(cwd):
     os.chdir(cwd)
     for file in glob.glob("*.txt"):
         csv_extraction(file, save=True)
-    
+
+def _dsc_plot_setup(legend):
+    fig, ax = plt.subplots(figsize=(3.5, 3.0))
+    ax.set_prop_cycle(cycler('color', ['y', 'g', 'b', 'r']))
+        #Plot formatting goes here
+    plt.xlabel('Temperature ($^o$C)', family='arial', weight='bold', size=8)
+    plt.ylabel('Heat Flow (mW)', family='arial', weight='bold', size=8)
+    minor_locator = ticker.AutoMinorLocator()
+    ax.xaxis.set_minor_locator(minor_locator)
+    ax.xaxis.set_major_locator(ticker.MaxNLocator(4))
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
+    ax.tick_params(axis='both', which='major', labelsize=6)
+    #custom y-axis, if needed:
+    #ax.set_ylim([-1, -0.6])
+    plt.tight_layout()
+
+    return fig, ax
     
 def dsc_plotting(cwd, title, cycle=2, filenames=None, legend=False):
     """Creates stacked plot of all DSC data from multiple .csvs
@@ -133,9 +150,8 @@ def dsc_plotting(cwd, title, cycle=2, filenames=None, legend=False):
     legend: whether or not to include legend object with plot.
     
     """
-
-    fig, ax = plt.subplots(figsize=(3.5, 3.0))
-    ax.set_prop_cycle(cycler('color', ['y', 'g', 'b', 'r']))
+    cycle = float(cycle)
+    fig, ax = _dsc_plot_setup(legend)
     
     if filenames is None:
         filenames = [file for file in Path(cwd).glob("*.txt")]
@@ -143,37 +159,26 @@ def dsc_plotting(cwd, title, cycle=2, filenames=None, legend=False):
         filenames = list(filenames)
     else:
         raise TypeError('filenames must be list of strings or None.')
-        
+    
     for i, name in enumerate(filenames):
         df = csv_extraction(name)
-        #Plot formatting goes here
-        plt.xlabel('Temperature ($^o$C)', family='arial', weight='bold', size=8)
-        plt.ylabel('Heat Flow (mW)', family='arial', weight='bold', size=8)
-        minor_locator = ticker.AutoMinorLocator()
-        ax.xaxis.set_minor_locator(minor_locator)
-        ax.xaxis.set_major_locator(ticker.MaxNLocator(4))
-        ax.spines['right'].set_visible(False)
-        ax.spines['top'].set_visible(False)
-        ax.tick_params(axis='both', which='major', labelsize=6)
-        #custom y-axis, if needed:
-        #ax.set_ylim([-1, -0.6])
-        plt.tight_layout()
-        if legend:
-            plt.legend(prop={'size':6}, frameon=False)
-
         df = normalize(df)
         #This operation introduces offset between the graphs
         if i != len(filenames):
             df.loc['normalized'] = df['normalized'].apply(lambda x: x-i*1/len(filenames))
         else: 
             df.loc['normalized'] = df['normalized'].apply(lambda x: x-1)
-            
+        if len(df.loc[df['cycle'] == cycle, 'temperature (C)'][:-1]) == 0:
+            raise Exception('Invalid cycle specified. Please use enter a cycle between {} and {}'.format(df['cycle'].min(), df['cycle'].max()))
+        label = str(name.stem).split('_')[1]
         ax.plot(df.loc[df['cycle'] == cycle, 'temperature (C)'][:-1],
                  df.loc[df['cycle'] == cycle, 'normalized'][:-1],
-                 label=str(name.stem).split('_')[-1].upper(),
+                 label=label,
                  linewidth=1.25)
+    if legend:
+        ax.legend(prop={'size':6}, frameon=False)
 
-        plt.savefig(Path(cwd)/f'{title}.png', dpi=300)
+    plt.savefig(Path(cwd)/f'{title}.png', dpi=300)
         
 
 def normalize(df):
@@ -182,7 +187,7 @@ def normalize(df):
     #Unecessary for first implementation, since all cycle lengths identical.
     max_mW = df['heat flow (mW)'].max()
     min_mW = df['heat flow (mW)'].min()
-    df.loc['normalized'] = df.loc[:, 'heat flow (mW)'].apply(lambda x: 
+    df['normalized'] = df.loc[:, 'heat flow (mW)'].apply(lambda x: 
         (x-max_mW) / (max_mW - min_mW))
     return df
 
@@ -199,7 +204,6 @@ def cycle_reproducibility(path, odd_heat_cycles=False):
                          (df['cycle'] != 0+odd_heat_cycles) &
                          (df['cycle'] != 12-odd_heat_cycles) &
                          (df['time (min)'] > 0)]
-        print(heating['cycle'].unique())
         #Following loop finds best way to split up plots
         for coord in range(1, 4, -1):
             if len(filenames) % coord == 0:
