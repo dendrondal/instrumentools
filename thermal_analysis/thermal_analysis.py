@@ -164,17 +164,14 @@ def dsc_plotting(cwd, title, cycle=2, filenames=None, legend=False):
     for i, name in enumerate(filenames):
         print(f'Processing {name.stem}...')
         df = csv_extraction(name)
-        df = normalize(df)
+        df = normalize(df, cycle)
         #This operation introduces offset between the graphs
-        if i != len(filenames):
-            df.loc['normalized'] = df['normalized'].apply(lambda x: x-i*1/len(filenames))
-        else: 
-            df.loc['normalized'] = df['normalized'].apply(lambda x: x-1)
+        df['normalized'] = df['normalized'].apply(lambda x: x-i*1/len(filenames))
         if len(df.loc[df['cycle'] == cycle, 'temperature (C)'][:-1]) == 0:
             raise Exception('Invalid cycle specified. Please use enter a cycle between {} and {}'.format(df['cycle'].min(), df['cycle'].max()))
         label = str(name.stem).split('_')[1]
-        ax.plot(df.loc[df['cycle'] == cycle, 'temperature (C)'][:-1],
-                 df.loc[df['cycle'] == cycle, 'normalized'][:-1],
+        ax.plot(df.loc[df['cycle'] == cycle, 'temperature (C)'][:-1][1:],
+                 df.loc[df['cycle'] == cycle, 'normalized'][:-1][1:],
                  label=label,
                  linewidth=1.25)
     if legend:
@@ -183,14 +180,15 @@ def dsc_plotting(cwd, title, cycle=2, filenames=None, legend=False):
     plt.savefig(Path(cwd)/f'{title}.png', dpi=300)
         
 
-def normalize(df):
-    df = df.loc[df['cycle'] > 1]
-    #TODO: change this from set value to first cycle duration.
-    #Unecessary for first implementation, since all cycle lengths identical.
-    max_mW = df['heat flow (mW)'].max()
-    min_mW = df['heat flow (mW)'].min()
-    df['normalized'] = df.loc[:, 'heat flow (mW)'].apply(lambda x: 
-        (x-max_mW) / (max_mW - min_mW))
+def normalize(df, cycle):
+    min_mW = df.groupby([df['cycle'] == cycle]).min()['heat flow (mW)'][1]
+    max_mW = df.groupby([df['cycle'] == cycle]).max()['heat flow (mW)'][1]
+    if min_mW == max_mW:
+        cycle += 1
+        print(f'Dummy cycle specified. Trying cycle {cycle} instead')
+    #Getting rid of settingwithcopy warning, since it doesn't matter here
+    pd.options.mode.chained_assignment = None
+    df['normalized'] = df.loc[:, 'heat flow (mW)'].apply(lambda x: (x - max_mW) / (max_mW - min_mW))
     return df
 
 

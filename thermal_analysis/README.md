@@ -7,3 +7,6 @@ To use this:
 	2. Go to File > Export and export either a .csv for Universal Analysis or File > Output to Excel for MUSE.
 	3. Once all spectra are exported in proper format, transfer them via flash drive/hard drive to the newly created folder.
 	4. Point this script there and run it according to the documentation.
+
+### Naming formalism
+This script assumes that you name your files according to WRG standards. That is, your DSC filenames are of the format INITIALS_DATE_FILENAME-DETAILS.txt. The FILENAME-DETAILS is what will show up in the plot legend.
