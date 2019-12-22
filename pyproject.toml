@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "instrumentools"
-version = "0.2.0"
+version = "0.2.1"
 description = "Data processing and plotting scripts for chemistry workflows"
 license = "MIT"
 homepage = "https://github.com/dendrondal/instrumentools"
