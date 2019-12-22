@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="instrumentools-dendrondal",
-    version="0.0.1",
+    version="0.2.0",
     author="dendrondal",
     author_email="dendrondal@protonmai.com",
     description="Data analysis tools for chemistry instrumentation",
